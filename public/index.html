@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIUFLIX - Nonton Tanpa Batas</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">VIUFLIX</div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Judul, orang, genre">
+            <span class="material-icons" onclick="doSearch()">search</span>
+        </div>
+    </nav>
+
+    <div id="playerModal" class="player-modal hidden">
+        <div class="player-container">
+            <div class="player-header">
+                <span id="playerTitle">Judul Video</span>
+                <button onclick="closePlayer()" class="close-btn">&times;</button>
+            </div>
+            <video id="video" controls autoplay></video>
+            <div id="episodeList" class="episode-list">
+                </div>
+        </div>
+    </div>
+
+    <div id="mainContent">
+        
+        <header id="hero" class="hero">
+            <div class="hero-content">
+                <h1 id="heroTitle" class="hero-title">Loading...</h1>
+                <p id="heroDesc" class="hero-desc">Mohon tunggu sebentar, sedang memuat film trending...</p>
+                <div class="hero-buttons">
+                    <button id="heroPlayBtn" class="btn btn-play"><span class="material-icons">play_arrow</span> Play</button>
+                    <button class="btn btn-info"><span class="material-icons">info</span> Selengkapnya</button>
+                </div>
+            </div>
+            <div class="hero-overlay"></div>
+        </header>
+
+        <div id="rowsContainer" class="rows-container">
+            </div>
+
+    </div>
+
+    <div id="searchResults" class="search-results hidden">
+        <h2>Hasil Pencarian</h2>
+        <div id="searchGrid" class="grid-container"></div>
+        <button class="btn-back" onclick="closeSearch()">Kembali ke Beranda</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
