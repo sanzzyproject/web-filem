@@ -1,171 +1,142 @@
-const API_URL = '/api'; 
+const API_URL = '/api/index'; // Mengarah ke function Vercel
 
-// Elements
-const heroImg = document.getElementById('heroImg');
-const heroTitle = document.getElementById('heroTitle');
-const heroInfo = document.getElementById('heroInfo');
-const rowsContainer = document.getElementById('rowsContainer');
-const detailModal = document.getElementById('detailModal');
-const backdrop = document.getElementById('modalBackdrop');
-
+// --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
     loadHome();
-    
-    // Navbar Scroll Effect
     window.addEventListener('scroll', () => {
         const nav = document.getElementById('navbar');
-        if (window.scrollY > 50) nav.classList.add('scrolled');
-        else nav.classList.remove('scrolled');
+        nav.classList.toggle('scrolled', window.scrollY > 50);
     });
 });
 
 async function loadHome() {
     try {
         const res = await fetch(`${API_URL}?action=home`);
-        if(!res.ok) throw new Error("Gagal connect ke server");
+        if(!res.ok) throw new Error("Gagal mengambil data dari server");
         
         const json = await res.json();
         
-        // --- LOGIC PARSING DATA YANG LEBIH KUAT ---
-        // Kadang data ada di section, kadang di item_list tergantung update API
-        let sections = [];
-        
-        // Cek struktur data umum Viu
-        if (json.section) sections = json.section;
-        else if (Array.isArray(json)) sections = json;
-        
-        if (sections.length === 0) {
-            document.querySelector('.hero-loader').style.display = 'none';
-            heroTitle.innerText = "Gagal memuat konten. Refresh halaman.";
-            return;
-        }
+        // Parsing data yang fleksibel
+        let sections = json.section || (Array.isArray(json) ? json : []);
+        if (sections.length === 0) throw new Error("Data film kosong");
 
-        // 1. Setup Hero (Ambil film pertama dari section pertama yang valid)
-        const validSection = sections.find(s => s.data && s.data.length > 0);
-        if (validSection) {
-            const heroMovie = validSection.data[0];
-            setupHero(heroMovie);
-        }
+        // Cari section yang valid
+        const validSections = sections.filter(s => s.data && s.data.length > 0);
+        if(validSections.length === 0) throw new Error("Tidak ada film ditemukan");
 
-        // 2. Render Rows
-        rowsContainer.innerHTML = ''; // Hapus skeleton
+        // Set Hero (Ambil item pertama dari section pertama)
+        const heroItem = validSections[0].data[0];
+        setupHero(heroItem);
+
+        // Render List
+        const container = document.getElementById('sectionsContainer');
+        container.innerHTML = '';
         
-        sections.forEach(sec => {
-            if (sec.data && sec.data.length > 0 && sec.title) {
-                const row = document.createElement('div');
-                row.className = 'row';
+        validSections.forEach(sec => {
+            if(sec.title) {
+                const sectionHtml = document.createElement('div');
+                sectionHtml.className = 'section';
                 
-                // Generate Poster HTML
-                const posters = sec.data.map(mov => `
-                    <img class="poster" 
-                         src="${mov.image_url}" 
-                         onclick="openDetail('${mov.product_id}')"
-                         loading="lazy"
-                         alt="${mov.title || 'Movie'}">
+                const cards = sec.data.map(mov => `
+                    <div class="card" onclick="openDetail('${mov.product_id}')">
+                        <img src="${mov.image_url}" loading="lazy" alt="${mov.title}">
+                    </div>
                 `).join('');
 
-                row.innerHTML = `
-                    <h3>${sec.title}</h3>
-                    <div class="row-scroller">${posters}</div>
+                sectionHtml.innerHTML = `
+                    <div class="section-title">${sec.title}</div>
+                    <div class="scroll-row">${cards}</div>
                 `;
-                rowsContainer.appendChild(row);
+                container.appendChild(sectionHtml);
             }
         });
 
+        // Switch tampilan dari Loading ke Content
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('content').classList.remove('hidden');
+
     } catch (err) {
         console.error(err);
-        alert("Terjadi kesalahan jaringan.");
+        document.getElementById('loader').innerHTML = `
+            <div style="padding:40px; text-align:center;">
+                <h3>Maaf, Terjadi Kesalahan</h3>
+                <p>${err.message}</p>
+                <button class="btn btn-play" onclick="location.reload()" style="margin:20px auto;">Coba Lagi</button>
+            </div>
+        `;
     }
 }
 
 function setupHero(movie) {
-    // Hide loader
-    document.querySelector('.hero-loader').classList.add('hidden');
+    document.getElementById('heroImg').src = movie.cover_image_url || movie.image_url;
+    document.getElementById('heroTitle').innerText = movie.title || "Featured";
     
-    // Set Image & Text
-    const imgUrl = movie.cover_image_url || movie.image_url;
-    heroImg.src = imgUrl;
-    heroImg.classList.remove('hidden');
-    
-    heroTitle.innerText = movie.title || "Featured Content";
-    heroInfo.classList.remove('hidden');
-
-    // Button Actions
-    document.getElementById('heroPlayBtn').onclick = () => openDetail(movie.product_id); // Ke detail dulu biar rapi
-    document.getElementById('heroDetailBtn').onclick = () => openDetail(movie.product_id);
+    document.getElementById('heroPlay').onclick = () => openDetail(movie.product_id);
+    document.getElementById('heroInfo').onclick = () => openDetail(movie.product_id);
 }
 
 // --- DETAIL & EPISODES ---
-
 async function openDetail(id) {
-    // Show Loading state in Modal (Optional improvement)
-    backdrop.classList.remove('hidden');
-    detailModal.classList.add('active');
+    const sheet = document.getElementById('sheet');
+    const overlay = document.getElementById('sheetOverlay');
+    const epList = document.getElementById('epList');
+
+    // Buka sheet dulu biar responsif
+    overlay.classList.add('active');
+    sheet.classList.add('active');
     
-    // Reset konten lama
-    document.getElementById('modalTitle').innerText = "Loading...";
-    document.getElementById('episodeList').innerHTML = '<div class="skeleton" style="height:50px;width:100%"></div>';
+    document.getElementById('sheetTitle').innerText = "Memuat...";
+    epList.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">Mengambil info...</div>';
 
     try {
         const res = await fetch(`${API_URL}?action=detail&id=${id}`);
         const data = await res.json();
-        
         const meta = data.metadata.current_product;
-        
-        // Isi Data Modal
-        document.getElementById('modalTitle').innerText = meta.title || meta.synopsis;
-        document.getElementById('modalDesc').innerText = meta.synopsis || "Tidak ada deskripsi.";
-        document.getElementById('modalYear').innerText = meta.release_date || "2024";
-        
-        // Render Episodes
-        const epList = document.getElementById('episodeList');
-        epList.innerHTML = '';
 
+        document.getElementById('sheetTitle').innerText = meta.title || meta.synopsis;
+        document.getElementById('sheetDesc').innerText = meta.synopsis || "-";
+        document.getElementById('sheetYear').innerText = meta.release_date || "";
+
+        epList.innerHTML = '';
         if(data.product_list && data.product_list.length > 0) {
-            data.product_list.forEach((ep, index) => {
+            data.product_list.forEach(ep => {
                 const div = document.createElement('div');
                 div.className = 'ep-item';
-                div.onclick = () => playVideo(ep.ccs_product_id, ep.title || `Episode ${ep.number}`);
                 div.innerHTML = `
-                    <span class="material-icons ep-play-icon">play_circle_outline</span>
                     <div class="ep-info">
                         <h4>Episode ${ep.number}</h4>
-                        <small>${ep.synopsis ? ep.synopsis.substring(0,40)+'...' : 'Tonton sekarang'}</small>
+                        <p>${ep.synopsis ? ep.synopsis.substring(0, 30)+'...' : 'Tonton sekarang'}</p>
                     </div>
+                    <span class="material-icons" style="color:var(--primary)">play_circle</span>
                 `;
+                div.onclick = () => playVideo(ep.ccs_product_id);
                 epList.appendChild(div);
             });
         } else {
-            epList.innerHTML = '<p>Video tidak tersedia.</p>';
+            epList.innerHTML = '<div style="padding:20px">Video tidak tersedia</div>';
         }
 
     } catch (err) {
-        document.getElementById('modalTitle').innerText = "Error";
+        document.getElementById('sheetTitle').innerText = "Gagal Memuat";
     }
 }
 
-function closeDetail() {
-    detailModal.classList.remove('active');
-    backdrop.classList.add('hidden');
+function closeSheet() {
+    document.getElementById('sheet').classList.remove('active');
+    document.getElementById('sheetOverlay').classList.remove('active');
 }
 
-// --- PLAYER LOGIC ---
-
-async function playVideo(ccsId, title) {
-    const playerContainer = document.getElementById('playerContainer');
+// --- PLAYER ---
+async function playVideo(ccsId) {
+    const modal = document.getElementById('playerModal');
     const video = document.getElementById('videoPlayer');
-    
-    // Tampilkan Player UI
-    playerContainer.classList.remove('hidden');
-    document.getElementById('playerTitle').innerText = "Memuat Video...";
-    
+    modal.classList.add('active');
+
     try {
         const res = await fetch(`${API_URL}?action=stream&id=${ccsId}`);
         const data = await res.json();
         
-        if(data.url) {
-            document.getElementById('playerTitle').innerText = title || "Now Playing";
-            
+        if (data.url) {
             if (Hls.isSupported()) {
                 const hls = new Hls();
                 hls.loadSource(data.url);
@@ -176,43 +147,47 @@ async function playVideo(ccsId, title) {
                 video.play();
             }
         } else {
-            alert("Link stream gagal didapat (Mungkin konten Premium).");
-            closePlayer();
+            alert("Stream link tidak ditemukan (Mungkin konten Premium)");
+            stopVideo();
         }
     } catch (err) {
-        alert("Error memutar video.");
-        closePlayer();
+        alert("Gagal memutar video");
+        stopVideo();
     }
 }
 
-function closePlayer() {
+function stopVideo() {
     const video = document.getElementById('videoPlayer');
     video.pause();
     video.src = "";
-    document.getElementById('playerContainer').classList.add('hidden');
+    document.getElementById('playerModal').classList.remove('active');
 }
 
 // --- SEARCH ---
 function toggleSearch() {
-    const overlay = document.getElementById('searchOverlay');
-    overlay.classList.toggle('hidden');
-    if(!overlay.classList.contains('hidden')) document.getElementById('searchInput').focus();
+    const page = document.getElementById('searchPage');
+    page.classList.toggle('active');
+    if(page.classList.contains('active')) document.getElementById('searchInput').focus();
 }
 
 document.getElementById('searchInput').addEventListener('keypress', async (e) => {
     if(e.key === 'Enter') {
-        const q = e.target.value;
-        const grid = document.getElementById('searchResultGrid');
-        grid.innerHTML = 'Loading...';
+        const grid = document.getElementById('searchGrid');
+        grid.innerHTML = '<div style="color:#fff">Mencari...</div>';
         
-        const res = await fetch(`${API_URL}?action=search&query=${q}`);
-        const data = await res.json();
-        
-        grid.innerHTML = '';
-        data.forEach(item => {
-            grid.innerHTML += `
-                <img src="${item.image_url}" style="width:100%; border-radius:4px;" onclick="openDetail('${item.product_id}'); toggleSearch()">
-            `;
-        });
+        try {
+            const res = await fetch(`${API_URL}?action=search&query=${e.target.value}`);
+            const data = await res.json();
+            
+            grid.innerHTML = '';
+            data.forEach(item => {
+                grid.innerHTML += `
+                    <div class="card" onclick="openDetail('${item.product_id}'); toggleSearch()">
+                        <img src="${item.image_url}" style="width:100%; border-radius:4px;">
+                        <p style="font-size:0.7rem; margin-top:5px; color:#ccc; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">${item.title || item.synopsis}</p>
+                    </div>
+                `;
+            });
+        } catch(err) { grid.innerHTML = 'Gagal mencari.'; }
     }
 });
