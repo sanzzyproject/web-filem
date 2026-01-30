@@ -2,58 +2,79 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIUFLIX - Nonton Tanpa Batas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VIUFLIX</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
 
-    <nav class="navbar">
+    <nav class="navbar" id="navbar">
         <div class="logo">VIUFLIX</div>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Judul, orang, genre">
-            <span class="material-icons" onclick="doSearch()">search</span>
-        </div>
+        <span class="material-icons search-icon" onclick="toggleSearch()">search</span>
     </nav>
 
-    <div id="playerModal" class="player-modal hidden">
-        <div class="player-container">
-            <div class="player-header">
-                <span id="playerTitle">Judul Video</span>
-                <button onclick="closePlayer()" class="close-btn">&times;</button>
-            </div>
-            <video id="video" controls autoplay></video>
-            <div id="episodeList" class="episode-list">
-                </div>
+    <div id="searchOverlay" class="search-overlay hidden">
+        <div class="search-header">
+            <input type="text" id="searchInput" placeholder="Cari film, drama, variety...">
+            <span class="material-icons" onclick="toggleSearch()">close</span>
+        </div>
+        <div id="searchResultGrid" class="grid-container"></div>
+    </div>
+
+    <div id="playerContainer" class="player-overlay hidden">
+        <video id="videoPlayer" controls playsinline></video>
+        <div class="player-controls-top">
+            <button onclick="closePlayer()" class="btn-close-player"><span class="material-icons">arrow_back</span></button>
+            <span id="playerTitle">Judul Video</span>
         </div>
     </div>
 
-    <div id="mainContent">
+    <main id="homeContent">
         
-        <header id="hero" class="hero">
-            <div class="hero-content">
-                <h1 id="heroTitle" class="hero-title">Loading...</h1>
-                <p id="heroDesc" class="hero-desc">Mohon tunggu sebentar, sedang memuat film trending...</p>
-                <div class="hero-buttons">
-                    <button id="heroPlayBtn" class="btn btn-play"><span class="material-icons">play_arrow</span> Play</button>
-                    <button class="btn btn-info"><span class="material-icons">info</span> Selengkapnya</button>
+        <div id="hero" class="hero">
+            <div class="hero-loader skeleton"></div> <img id="heroImg" class="hero-img hidden">
+            <div class="hero-gradient"></div>
+            <div class="hero-info hidden" id="heroInfo">
+                <div class="hero-tags">
+                    <span class="tag">Trending #1</span>
+                    <span class="tag">Korea</span>
+                </div>
+                <h1 id="heroTitle">Memuat...</h1>
+                <div class="hero-actions">
+                    <button id="heroPlayBtn" class="btn-play"><span class="material-icons">play_arrow</span> Putar</button>
+                    <button id="heroDetailBtn" class="btn-info"><span class="material-icons">info</span> Detail</button>
                 </div>
             </div>
-            <div class="hero-overlay"></div>
-        </header>
+        </div>
 
         <div id="rowsContainer" class="rows-container">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+        </div>
+    </main>
+
+    <div id="detailModal" class="detail-modal">
+        <div class="modal-content">
+            <div class="modal-handle"></div>
+            <button class="modal-close" onclick="closeDetail()">&times;</button>
+            
+            <h2 id="modalTitle">Judul Film</h2>
+            <div class="modal-meta">
+                <span id="modalYear">2024</span> &bull; 
+                <span id="modalGenre">Drama</span>
             </div>
-
+            <p id="modalDesc">Deskripsi film...</p>
+            
+            <div class="episode-section">
+                <h3>Episodes</h3>
+                <div id="episodeList" class="episode-scroll">
+                    </div>
+            </div>
+        </div>
     </div>
-
-    <div id="searchResults" class="search-results hidden">
-        <h2>Hasil Pencarian</h2>
-        <div id="searchGrid" class="grid-container"></div>
-        <button class="btn-back" onclick="closeSearch()">Kembali ke Beranda</button>
-    </div>
+    <div id="modalBackdrop" class="modal-backdrop hidden" onclick="closeDetail()"></div>
 
     <script src="script.js"></script>
 </body>
