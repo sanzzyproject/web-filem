@@ -12,69 +12,57 @@
 
     <nav class="navbar" id="navbar">
         <div class="logo">VIUFLIX</div>
-        <span class="material-icons search-icon" onclick="toggleSearch()">search</span>
+        <span class="material-icons icon-btn" onclick="toggleSearch()">search</span>
     </nav>
 
-    <div id="searchOverlay" class="search-overlay hidden">
-        <div class="search-header">
-            <input type="text" id="searchInput" placeholder="Cari film, drama, variety...">
-            <span class="material-icons" onclick="toggleSearch()">close</span>
-        </div>
-        <div id="searchResultGrid" class="grid-container"></div>
+    <div id="searchPage" class="search-page">
+        <input type="text" id="searchInput" class="search-input" placeholder="Cari film, drakor, anime...">
+        <div id="searchGrid" class="grid"></div>
     </div>
 
-    <div id="playerContainer" class="player-overlay hidden">
-        <video id="videoPlayer" controls playsinline></video>
-        <div class="player-controls-top">
-            <button onclick="closePlayer()" class="btn-close-player"><span class="material-icons">arrow_back</span></button>
-            <span id="playerTitle">Judul Video</span>
-        </div>
-    </div>
-
-    <main id="homeContent">
-        
-        <div id="hero" class="hero">
-            <div class="hero-loader skeleton"></div> <img id="heroImg" class="hero-img hidden">
-            <div class="hero-gradient"></div>
-            <div class="hero-info hidden" id="heroInfo">
-                <div class="hero-tags">
-                    <span class="tag">Trending #1</span>
-                    <span class="tag">Korea</span>
-                </div>
-                <h1 id="heroTitle">Memuat...</h1>
-                <div class="hero-actions">
-                    <button id="heroPlayBtn" class="btn-play"><span class="material-icons">play_arrow</span> Putar</button>
-                    <button id="heroDetailBtn" class="btn-info"><span class="material-icons">info</span> Detail</button>
-                </div>
-            </div>
+    <div id="home">
+        <div id="loader">
+            <div class="skeleton sk-hero"></div>
+            <div class="skeleton sk-row"></div>
+            <div class="skeleton sk-row"></div>
         </div>
 
-        <div id="rowsContainer" class="rows-container">
-            <div class="skeleton-row"></div>
-            <div class="skeleton-row"></div>
-        </div>
-    </main>
-
-    <div id="detailModal" class="detail-modal">
-        <div class="modal-content">
-            <div class="modal-handle"></div>
-            <button class="modal-close" onclick="closeDetail()">&times;</button>
-            
-            <h2 id="modalTitle">Judul Film</h2>
-            <div class="modal-meta">
-                <span id="modalYear">2024</span> &bull; 
-                <span id="modalGenre">Drama</span>
-            </div>
-            <p id="modalDesc">Deskripsi film...</p>
-            
-            <div class="episode-section">
-                <h3>Episodes</h3>
-                <div id="episodeList" class="episode-scroll">
+        <div id="content" class="hidden">
+            <header class="hero">
+                <img id="heroImg" src="" alt="Hero">
+                <div class="hero-gradient"></div>
+                <div class="hero-content">
+                    <h1 id="heroTitle">Judul Film</h1>
+                    <div class="hero-btns">
+                        <button class="btn btn-play" id="heroPlay"><span class="material-icons">play_arrow</span> Putar</button>
+                        <button class="btn btn-glass" id="heroInfo"><span class="material-icons">info_outline</span> Info</button>
                     </div>
-            </div>
+                </div>
+            </header>
+            <div id="sectionsContainer"></div>
         </div>
     </div>
-    <div id="modalBackdrop" class="modal-backdrop hidden" onclick="closeDetail()"></div>
+
+    <div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+    <div class="sheet" id="sheet">
+        <div class="sheet-header">
+            <button class="close-sheet" onclick="closeSheet()">&times;</button>
+        </div>
+        <div class="sheet-content">
+            <h2 id="sheetTitle" style="font-size: 1.5rem; margin-bottom: 5px;">Judul</h2>
+            <div class="meta-tags">
+                <span id="sheetYear">2024</span> &bull; <span id="sheetGenre">Drama</span>
+            </div>
+            <p id="sheetDesc" style="line-height: 1.4; color: #ddd;">Deskripsi...</p>
+            
+            <div class="episode-list" id="epList"></div>
+        </div>
+    </div>
+
+    <div class="player-modal" id="playerModal">
+        <button class="close-player" onclick="stopVideo()"><span class="material-icons">arrow_back</span></button>
+        <video id="videoPlayer" controls playsinline></video>
+    </div>
 
     <script src="script.js"></script>
 </body>
